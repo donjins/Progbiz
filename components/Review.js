@@ -1,5 +1,6 @@
 "use client";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import { useInView } from "framer-motion";
 
 const testimonials = [
   {
@@ -48,21 +49,28 @@ const testimonials = [
 
 export default function Testimonials() {
   const scrollRef = useRef(null);
+  const scrollContentRef = useRef(null);
+  const isInView = useInView(scrollRef, { once: false });
+  const [scrolling, setScrolling] = useState(false);
 
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    const content = scrollContentRef.current;
 
-    const content = el.querySelector(".scroll-content");
+    if (!el || !content) return;
+
+    // Clone content for infinite loop
     const clone = content.cloneNode(true);
+    clone.classList.add("scroll-clone");
     el.appendChild(clone);
 
     let animationFrame;
 
     const scroll = () => {
-      el.scrollTop += 0.5; // adjust speed here
+      if (!scrolling) return;
 
-      // Reset scroll position when it reaches half (1 loop of original)
+      el.scrollTop += 0.5; // adjust speed
+
       if (el.scrollTop >= content.scrollHeight) {
         el.scrollTop = 0;
       }
@@ -70,13 +78,20 @@ export default function Testimonials() {
       animationFrame = requestAnimationFrame(scroll);
     };
 
-    animationFrame = requestAnimationFrame(scroll);
+    if (isInView) {
+      setScrolling(true);
+      animationFrame = requestAnimationFrame(scroll);
+    } else {
+      setScrolling(false);
+      cancelAnimationFrame(animationFrame);
+    }
 
     return () => {
       cancelAnimationFrame(animationFrame);
-      if (el.contains(clone)) el.removeChild(clone);
+      const cloneEl = el.querySelector(".scroll-clone");
+      if (cloneEl) el.removeChild(cloneEl);
     };
-  }, []);
+  }, [isInView, scrolling]);
 
   return (
     <section className="min-h-screen text-white px-6 py-20 relative">
@@ -95,7 +110,10 @@ export default function Testimonials() {
         ref={scrollRef}
         className="relative mx-auto w-full max-w-6xl h-[600px] overflow-y-scroll no-scrollbar"
       >
-        <div className="scroll-content columns-1 md:columns-2 lg:columns-3 gap-[22px] space-y-[22px]">
+        <div
+          ref={scrollContentRef}
+          className="scroll-content columns-1 md:columns-2 lg:columns-3 gap-[22px] space-y-[22px]"
+        >
           {testimonials.map((testimonial, index) => (
             <article
               key={index}
