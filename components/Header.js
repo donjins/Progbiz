@@ -15,7 +15,7 @@ export default function Header() {
         aria-label="Main navigation"
       >
         <img
-          src="/Logo.png"
+          src="/LOGO.png"
           alt="Company Logo"
           className="h-8 md:h-10 lg:h-12 w-auto transform hover:scale-105 transition-transform duration-200"
         />
